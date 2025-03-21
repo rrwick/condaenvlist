@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""
+https://github.com/rrwick/condaenvlist
+Copyright 2025 Ryan Wick (rrwick@gmail.com) GNU General Public License v3
+
+Replacement for `conda env list` that shows more useful details for each conda environment:
+a description, last updated date and versions of key tools.
+
+Users can optionally add an `envinfo.txt` file to each environment directory to provide:
+  - A one-line free-text description
+  - A comma-separated list of key tools (optional)
+
+Example `envinfo.txt`:
+  My polishing environment for bacterial genomes.
+  medaka, polypolish, pypolca
+
+Requirements:
+  - Python 3.6 or later
+  - conda must be installed and available in PATH
+  - Works on Linux and macOS
+
+Usage:
+  Place the script in your PATH and run it without arguments:
+    condaenvlist
+"""
+
+import datetime
+import pathlib
+import re
+import shutil
+import subprocess
+import sys
+import textwrap
+
+
+def main():
+    envs = get_conda_envs()
+    for name, path in envs:
+        description, key_tools = get_info(path)
+        print("\n" + bold_yellow_underline(name))
+        print(wrap_description_text(description))
+        print(f"  Location:     {path}")
+        print(f"  Last updated: {get_last_updated(path)}")
+        if key_tools:
+            versions = get_conda_list_versions(name, key_tools)
+            print("  Key tools:")
+            for tool in key_tools:
+                version = versions.get(tool, "(version unknown)")
+                print(f"   • {tool} {version}")
+        print()
+
+
+def get_conda_envs():
+    try:
+        output = subprocess.check_output(["conda", "env", "list"], universal_newlines=True)
+    except Exception as e:
+        sys.exit("Error calling 'conda env list': " + str(e))
+    envs = []
+    for line in output.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = re.match(r'^(\S+)(?:\s+\*)?\s+(\S+)$', line)
+        if m:
+            name = m.group(1)
+            path = pathlib.Path(m.group(2))
+            envs.append((name, path))
+    if not envs:
+        print("No conda environments found.")
+        sys.exit(1)
+    return envs
+
+
+def get_last_updated(env_path):
+    history_file = env_path / "conda-meta" / "history"
+    if history_file.exists():
+        ts = history_file.stat().st_mtime
+    else:
+        ts = env_path.stat().st_mtime
+    return datetime.date.fromtimestamp(ts).strftime("%-d %b %Y")
+
+
+def get_info(env_path):
+    info_path = env_path / "envinfo.txt"
+    if not info_path.is_file():
+        return ("", [])
+    with open(info_path, 'rt') as f:
+        lines = [line.strip() for line in f if line.strip()]
+    description = lines[0] if len(lines) >= 1 else ""
+    key_tools = [tool.strip() for tool in lines[1].split(",")] if len(lines) >= 2 else []
+    return (description, key_tools)
+
+
+def get_conda_list_versions(env_name, key_tools):
+    try:
+        output = subprocess.check_output(["conda", "list", "-n", env_name, "--export"],
+                                         universal_newlines=True)
+    except Exception as e:
+        print(f"Warning: Error calling 'conda list -n {env_name} --export': {e}", file=sys.stderr)
+        return {}
+    versions = {}
+    for line in output.splitlines():
+        if line.startswith("#"):
+            continue
+        parts = line.split("=")
+        if len(parts) >= 3:
+            package = parts[0]
+            version = parts[1]
+            if package in key_tools:
+                versions[package] = version
+    return versions
+
+
+def wrap_description_text(description):
+    term_width = shutil.get_terminal_size(fallback=(70, 20)).columns
+    if not description:
+        description = "no description provided"
+    wrapper = textwrap.TextWrapper(initial_indent="  Description:  ",
+                                   subsequent_indent="                ",
+                                   width=term_width)
+    return wrapper.fill(description)
+
+
+def bold_yellow_underline(text):
+    yellow, bold, underline, end = '\033[93m', '\033[1m', '\033[4m', '\033[0m'
+    return yellow + bold + underline + text + end
+
+
+if __name__ == "__main__":
+    main()
