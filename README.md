@@ -48,7 +48,7 @@ So I created `condaenvlist` as a replacement for `conda env list`. It shows the 
 
 ## Example `envinfo.txt` file
 
-Contents of `/Users/wickr/miniconda3/envs/polishing/envinfo.txt`:
+Contents of `/Users/wickr/miniconda3/envs/polishing/envinfo.txt` from the above example:
 ```
 My favourite polishers for bacterial genomes, mainly for use on Autocycler assemblies. Also contains my compare_assemblies.py script for comparing pre-polish and post-polish assemblies.
 medaka, polypolish, pypolca
