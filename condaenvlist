@@ -37,7 +37,7 @@ def main():
     envs = get_conda_envs()
     for name, path in envs:
         description, key_tools = get_info(path)
-        print("\n" + bold_yellow_underline(name))
+        print("\n" + bold_underline(name))
         print(wrap_description_text(description))
         print(f"  Location:     {path}")
         print(f"  Last updated: {get_last_updated(path)}")
@@ -121,9 +121,9 @@ def wrap_description_text(description):
     return wrapper.fill(description)
 
 
-def bold_yellow_underline(text):
-    yellow, bold, underline, end = '\033[93m', '\033[1m', '\033[4m', '\033[0m'
-    return yellow + bold + underline + text + end
+def bold_underline(text):
+    bold, underline, end = '\033[1m', '\033[4m', '\033[0m'
+    return bold + underline + text + end
 
 
 if __name__ == "__main__":
