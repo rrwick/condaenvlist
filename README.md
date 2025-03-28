@@ -54,9 +54,9 @@ My favourite polishers for bacterial genomes, mainly for use on Autocycler assem
 medaka, polypolish, pypolca
 ```
 
-The first line is the environment description and is required.
+The first line is the environment description. If left blank, no description will be shown by `condaenvlist`.
 
-The second line is a comma-delimited list of key software tools. It determines which tools are shown in the output. This list is optional – if omitted, no key tools will be shown by `condaenvlist`.
+The second line is a comma-delimited list of key software tools. It determines which tools are shown in the output. If missing or left blank, no key tools will be shown by `condaenvlist`.
 
 `condaenvlist` uses `conda list` to determine tool versions. This works for most packages installed via `conda` or `pip`, but not for tools installed manually (e.g. binaries copied into the environment's `bin` directory, as with `autocycler` in the example above).
 
